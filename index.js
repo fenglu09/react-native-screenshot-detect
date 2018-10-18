@@ -21,7 +21,7 @@ function addIOSEventListener(handler) {
     return subscription;
 }
 function removeAllListener() {
-    if (removeAllListener) {
+    if (subscription) {
         subscription.remove();
     }
 }
