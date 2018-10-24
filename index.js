@@ -10,20 +10,28 @@ const ScreenShotDetect = NativeModules.RNScreenShotDetect;
 const screenshotDetectEmitter = new NativeEventEmitter(ScreenShotDetect);
 const subscription = null;
 const isListening = false;
-
+let emmitTimer = null;
 function addIOSEventListener(handler) {
     // 开始监听，初始化
     removeAllListener();
     ScreenShotDetect.startListener();
     subscription = screenshotDetectEmitter.addListener('ScreenShotDetected', (result) => {
         result.timeStamp = result.timeStamp * 1000;
-        handler(result);
+        clearTimer()
+        emmitTimer = setTimeout(() => {
+            result.timeStamp = result.timeStamp * 1000;
+            handler(result);
+        }, 1000);
     })
     return subscription;
+}
+function clearTimer() {
+    if (emmitTimer) clearTimeout(emmitTimer);
 }
 function removeAllListener() {
     if (subscription) {
         subscription.remove();
+        clearTimer();
     }
 }
 function startListen() {
@@ -42,7 +50,10 @@ function addAndroidEventListener(handler) {
     removeAllListener();
     startListen();
     subscription = DeviceEventEmitter.addListener('ScreenShotDetected', (result) => {
-        handler(result);
+        clearTimer()
+        emmitTimer = setTimeout(() => {
+            handler(result);
+        }, 1000);
     });
    
     return subscription;
