@@ -13,6 +13,7 @@ const isListening = false;
 
 function addIOSEventListener(handler) {
     // 开始监听，初始化
+    removeAllListener();
     ScreenShotDetect.startListener();
     subscription = screenshotDetectEmitter.addListener('ScreenShotDetected', (result) => {
         result.timeStamp = result.timeStamp * 1000;
@@ -38,6 +39,7 @@ function stopListen() {
     }
 }
 function addAndroidEventListener(handler) {
+    removeAllListener();
     startListen();
     subscription = DeviceEventEmitter.addListener('ScreenShotDetected', (result) => {
         handler(result);
