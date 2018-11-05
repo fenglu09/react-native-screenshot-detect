@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
@@ -29,19 +30,21 @@ import java.util.List;
  * Created by Jason on 2017/11/15.
  */
 
-public class ScreenShotDetectModule extends ReactContextBaseJavaModule implements  LifecycleEventListener {
+public class ScreenShotDetectModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     private final ReactApplicationContext mReactContext;
     private boolean isForeground = true;
 
-    private static final  String TAG = "ScreenShotDetect";
-    private static final  String ScreenShotEvent = "ScreenShotDetected";
+    private static final String TAG = "ScreenShotDetect";
+    private static final String ScreenShotEvent = "ScreenShotDetected";
 
     private long DATE_INTERVAL = 5 * 1000;
     private static long mStartListenTime;
     private Point sScreenSize;
 
-    /** 截屏依据中的路径判断关键字 */
+    /**
+     * 截屏依据中的路径判断关键字
+     */
     private static final String[] KEYWORDS = {
             "screenshot", "screen_shot", "screen-shot", "screen shot",
             "screencapture", "screen_capture", "screen-capture", "screen capture",
@@ -53,7 +56,9 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
             MediaStore.Images.ImageColumns.DATA,
             MediaStore.Images.ImageColumns.DATE_TAKEN
     };
-    /** api > 16 */
+    /**
+     * api > 16
+     */
     private static final String[] MEDIA_PROJECTIONS_API_16 = {
             MediaStore.Images.ImageColumns.DATA,
             MediaStore.Images.ImageColumns.DATE_TAKEN,
@@ -63,10 +68,14 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
 
     private List<String> hasCallbackPaths = new ArrayList<String>();
 
-    /** 内部存储器内容观察者 MediaContentObserver*/
-    private  MediaContentObserver mInternalObserver;
+    /**
+     * 内部存储器内容观察者 MediaContentObserver
+     */
+    private MediaContentObserver mInternalObserver;
 
-    /** 外部存储器内容观察者 */
+    /**
+     * 外部存储器内容观察者
+     */
     private MediaContentObserver mExternalObserver;
 
     @Override
@@ -91,7 +100,7 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
     }
 
     @ReactMethod
-    public  void startListen() {
+    public void startListen() {
 
         register();
     }
@@ -100,6 +109,7 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
     public void stopListen() {
         unRegister();
     }
+
     /**
      * 注销掉ContentObserver
      */
@@ -141,31 +151,47 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
         mInternalObserver = new MediaContentObserver(MediaStore.Images.Media.INTERNAL_CONTENT_URI);
         mExternalObserver = new MediaContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
-        // 注册内容观察者
-        mReactContext.getContentResolver().registerContentObserver(
-                MediaStore.Images.Media.INTERNAL_CONTENT_URI,
-                false,
-                mInternalObserver
-        );
-        mReactContext.getContentResolver().registerContentObserver(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                false,
-                mExternalObserver
-        );
+//        // 注册内容观察者
+//        mReactContext.getContentResolver().registerContentObserver(
+//                MediaStore.Images.Media.INTERNAL_CONTENT_URI,
+//                false,
+//                mInternalObserver
+//        );
+//        mReactContext.getContentResolver().registerContentObserver(
+//                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+//                false,
+//                mExternalObserver
+//        );
+
+        new Handler().postDelayed(new Runnable() {
+            public void run() {
+                mReactContext.getContentResolver().registerContentObserver(
+                        MediaStore.Images.Media.INTERNAL_CONTENT_URI,
+                        false,
+                        mInternalObserver
+                );
+                mReactContext.getContentResolver().registerContentObserver(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        false,
+                        mExternalObserver
+                );
+            }
+        }, 1000);
     }
 
     /**
      * 监听到变化时，触发，查找到最新的一条图片记录
+     *
      * @param contentUri
      */
     private void handleMediaContentChange(Uri contentUri) {
         Cursor cursor = null;
 
-        try{
+        try {
             // 数据改变时查询数据库中最后加入的一条数据
             cursor = mReactContext.getContentResolver().query(
                     contentUri,
-                    Build.VERSION.SDK_INT < 16 ? MEDIA_PROECtIONS: MEDIA_PROJECTIONS_API_16,
+                    Build.VERSION.SDK_INT < 16 ? MEDIA_PROECtIONS : MEDIA_PROJECTIONS_API_16,
                     null,
                     null,
                     MediaStore.Images.ImageColumns.DATE_ADDED + " desc limit 1");
@@ -181,17 +207,17 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
             }
 
             int dataIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
-            int dataTakenIndex =  cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATE_TAKEN);
+            int dataTakenIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATE_TAKEN);
             int widthIndex = -1;
             int heightIndex = -1;
             if (Build.VERSION.SDK_INT >= 16) {
-                widthIndex =  cursor.getColumnIndex(MediaStore.Images.ImageColumns.WIDTH);
-                heightIndex =  cursor.getColumnIndex(MediaStore.Images.ImageColumns.HEIGHT);
+                widthIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.WIDTH);
+                heightIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.HEIGHT);
             }
             // 获取行数据
             String data = cursor.getString(dataIndex);
             long dateTaken = cursor.getLong(dataTakenIndex);
-            int height =0;
+            int height = 0;
             int width = 0;
 
             if (widthIndex >= 0 && heightIndex >= 0) {
@@ -243,10 +269,11 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
 
     /**
      * 判断指定的数据行是否符合截屏条件
-     * @param data 截屏图片的url
-     * @param dateTaken  截屏时间
-     * @param width  图片的宽度
-     * @param height  图片的高度
+     *
+     * @param data      截屏图片的url
+     * @param dateTaken 截屏时间
+     * @param width     图片的宽度
+     * @param height    图片的高度
      * @return
      */
     private boolean checkScreenShot(String data, long dateTaken, int width, int height) {
@@ -279,7 +306,7 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
         data = data.toLowerCase();
 
         // 判断图片路径是否含有指定的关键字之一, 如果有, 则认为当前截屏了
-        for (String keyword: KEYWORDS) {
+        for (String keyword : KEYWORDS) {
             if (data.contains(keyword)) {
                 return true;
             }
@@ -308,6 +335,7 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
 
     /**
      * 读取图片的大小
+     *
      * @param imagePath
      * @return
      */
@@ -358,12 +386,12 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
 
     @Override
     public void onHostPause() {
-        isForeground =false;
+        isForeground = false;
     }
 
     @Override
     public void onHostDestroy() {
-        isForeground =false;
+        isForeground = false;
     }
 
     private class MediaContentObserver extends ContentObserver {

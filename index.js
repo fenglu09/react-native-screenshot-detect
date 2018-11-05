@@ -19,7 +19,7 @@ function addIOSEventListener(handler) {
         result.timeStamp = result.timeStamp * 1000;
         clearTimer()
         emmitTimer = setTimeout(() => {
-            result.timeStamp = result.timeStamp * 1000;
+
             handler(result);
         }, 1000);
     })
@@ -30,8 +30,13 @@ function clearTimer() {
 }
 function removeAllListener() {
     if (subscription) {
-        subscription.remove();
         clearTimer();
+        try {
+            subscription.remove();
+            subscription = null;
+        } catch (error) {
+        
+        }
     }
 }
 function startListen() {
