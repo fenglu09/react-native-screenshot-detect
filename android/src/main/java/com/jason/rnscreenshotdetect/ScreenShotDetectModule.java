@@ -142,7 +142,7 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
      */
     private void register() {
 
-//        注册之前先监听
+        // 注册之前先监听
         unRegister();
         hasCallbackPaths.clear();
         mStartListenTime = System.currentTimeMillis();
@@ -151,30 +151,25 @@ public class ScreenShotDetectModule extends ReactContextBaseJavaModule implement
         mInternalObserver = new MediaContentObserver(MediaStore.Images.Media.INTERNAL_CONTENT_URI);
         mExternalObserver = new MediaContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
-//        // 注册内容观察者
-//        mReactContext.getContentResolver().registerContentObserver(
-//                MediaStore.Images.Media.INTERNAL_CONTENT_URI,
-//                false,
-//                mInternalObserver
-//        );
-//        mReactContext.getContentResolver().registerContentObserver(
-//                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-//                false,
-//                mExternalObserver
-//        );
-
         new Handler().postDelayed(new Runnable() {
             public void run() {
-                mReactContext.getContentResolver().registerContentObserver(
-                        MediaStore.Images.Media.INTERNAL_CONTENT_URI,
-                        false,
-                        mInternalObserver
-                );
-                mReactContext.getContentResolver().registerContentObserver(
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                        false,
-                        mExternalObserver
-                );
+                try {
+                    if (mInternalObserver != null && mExternalObserver != null) {
+                        // 注册内容观察者
+                        mReactContext.getContentResolver().registerContentObserver(
+                                MediaStore.Images.Media.INTERNAL_CONTENT_URI,
+                                false,
+                                mInternalObserver
+                        );
+                        mReactContext.getContentResolver().registerContentObserver(
+                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                false,
+                                mExternalObserver
+                        );
+                    }
+                } catch (Exception e) {
+
+                }
             }
         }, 1000);
     }
