@@ -27,9 +27,11 @@ RCT_EXPORT_METHOD(startListener)
 {
     if (!sharedRNScreenShotDetect) {
         sharedRNScreenShotDetect = self;
+    } else {
+        // 所已经初始化过后，就不需要再次注册监听事件了，以免重复
+        return;
     }
     isApplicationActive = TRUE;
-    
     if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 0.7) {
         
         // 监听截图通知
