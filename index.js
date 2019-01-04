@@ -8,8 +8,8 @@ import {
 const isIOS = Platform.OS == 'ios';
 const ScreenShotDetect = NativeModules.RNScreenShotDetect;
 const screenshotDetectEmitter = new NativeEventEmitter(ScreenShotDetect);
-const subscription = null;
-const isListening = false;
+let subscription = null;
+let isListening = false;
 let emmitTimer = null;
 function addIOSEventListener(handler) {
     // 开始监听，初始化
